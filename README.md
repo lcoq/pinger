@@ -44,3 +44,22 @@ $ npm run ping -- http://domain.com/path/to/zipped/sitemap.xml -sg
 -h, --help               output usage information
 -V, --version            output the version number
 ```
+
+### Report
+
+This script provides a report for each URL pinged:
+
+```
+http://www.google.com 200 (0.36s)
+http://www.bing.com TIMEOUT
+```
+
+And a report once all URLs have been pinged:
+
+```
+--- Report ---
+Success: 792
+Timeout: 4
+Error: 0
+---
+```
