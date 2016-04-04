@@ -9,7 +9,8 @@ const request = require('request');
 var configuration = {
   timeout: 5,
   repeat: 1,
-  compressed: false
+  compressed: false,
+  sitemap: false
 };
 
 var report = {
@@ -23,12 +24,11 @@ run();
 function run () {
   defineProgram()
     .then(readConfiguration)
-    .then(ensureSitemapPathOrUrlIsSet)
+    .then(ensurePathOrUrlIsSet)
     .then(logConfiguration)
     .then(readStream)
     .then(unzipStream)
-    .then(parseXml)
-    .then(getUrlsFromXml)
+    .then(parseFileAndGetUrls)
     .then(pingUrlsAndRepeat)
     .then(logReport)
     .then(null, logAndThrowError);
@@ -41,8 +41,9 @@ function logAndThrowError (error) {
 
 function defineProgram () {
   program.version(process.env.npm_package_version);
-  program.arguments('<sitemap-file-path-or-url>');
+  program.arguments('<file-path-or-url>');
   program.option('-r, --repeat <count>', "Number of times URLs are pinged");
+  program.option('-s, --sitemap', "Parse file as a xml sitemap");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout");
   program.option('-g, --gzip', "Decompress file with gzip");
   return Promise.resolve();
@@ -50,12 +51,15 @@ function defineProgram () {
 
 function readConfiguration () {
   program.action(function (pathOrUrl) {
-    configuration.sitemapPathOrUrl = pathOrUrl;
+    configuration.pathOrUrl = pathOrUrl;
   });
   program.parse(process.argv);
 
   if (program.repeat && program.repeat.match(/^\d+$/)) {
     configuration.repeat = parseInt(program.repeat);
+  }
+  if (program.sitemap) {
+    configuration.sitemap = true;
   }
   if (program.timeout && program.timeout.match(/^\d+(\.\d+)*$/)) {
     configuration.timeout = parseFloat(program.timeout);
@@ -66,10 +70,10 @@ function readConfiguration () {
   return Promise.resolve();
 }
 
-function ensureSitemapPathOrUrlIsSet () {
+function ensurePathOrUrlIsSet () {
   return new Promise(function (resolve, reject) {
-    if (typeof configuration.sitemapPathOrUrl === 'undefined') {
-      reject(new Error("Cannot ping sitemap: no path or url given."));
+    if (typeof configuration.pathOrUrl === 'undefined') {
+      reject(new Error("Cannot ping file: no path or url given."));
     } else {
       resolve();
     }
@@ -79,7 +83,7 @@ function ensureSitemapPathOrUrlIsSet () {
 function logConfiguration () {
   const log = console.log;
   log("--- Configuration ---");
-  log("Sitemap path: %s", configuration.sitemapPathOrUrl);
+  log("File path: %s", configuration.pathOrUrl);
   log("Repeat: %d time(s)", configuration.repeat);
   log("Timeout: %d second(s)", configuration.timeout);
   log("Compressed: %s", configuration.compressed);
@@ -88,41 +92,39 @@ function logConfiguration () {
 }
 
 function readStream () {
-  console.log("Reading sitemap...");
-  const sitemapPathOrUrl = configuration.sitemapPathOrUrl;
-  const result = sitemapPathOrUrl.match(/^http/) ? _readUrl(sitemapPathOrUrl) : readFile(sitemapPathOrUrl);
+  console.log("Reading file...");
+  const pathOrUrl = configuration.pathOrUrl;
+  const result = pathOrUrl.match(/^http/) ? _readUrl(pathOrUrl) : readFile(pathOrUrl);
   return result.then(null, function (error) {
-    throw new Error("Cannot read sitemap file:\n  " + error.message);
+    throw new Error("Cannot read file:\n  " + error.message);
   });
 }
 
 function unzipStream (stream) {
   console.log("Unzipping file...");
   if (!configuration.compressed) {
-    return Promise.resolve(stream);
+    return Promise.resolve(stream.toString());
   }
   return unzipBuffer(stream)
     .then(function (unzippedBuffer) {
       return unzippedBuffer.toString();
-    }).then(null, function (error) {
-      throw new Error("Cannot unzip sitemap file:\n " + error.message);
+    })
+    .then(null, function (error) {
+      throw new Error("Cannot unzip file:\n " + error.message);
     });
 }
 
-function parseXml (string) {
-  console.log("Parsing file...");
-  return parseXmlString(string).then(null, function (error) {
-    throw new Error("Cannot parse sitemap file:\n " + error.message);
-  });
-}
-
-function getUrlsFromXml (xml) {
-  console.log("Getting urls from XML...");
-  const urlElements = xml.urlset.url;
-  const urls = urlElements.map(function (urlElement) {
-    return urlElement.loc[0];
-  });
-  return Promise.resolve(urls);
+function parseFileAndGetUrls (string) {
+  console.log("Parsing file and get URLs...");
+  if (configuration.sitemap) {
+    return parseXmlString(string)
+      .then(_getUrlsFromXml)
+      .then(null, function (error) {
+        throw new Error("Cannot parse file:\n " + error.message);
+      });
+  } else {
+    return Promise.resolve(string.split("\n"));
+  }
 }
 
 function pingUrlsAndRepeat (urls) {
@@ -185,6 +187,15 @@ function _readUrl (url) {
       }
     });
   });
+}
+
+function _getUrlsFromXml (xml) {
+  console.log("Getting urls from XML...");
+  const urlElements = xml.urlset.url;
+  const urls = urlElements.map(function (urlElement) {
+    return urlElement.loc[0];
+  });
+  return Promise.resolve(urls);
 }
 
 function _times (n, fn) {
