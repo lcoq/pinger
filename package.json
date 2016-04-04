@@ -1,0 +1,15 @@
+{
+  "name": "sitemap-ping",
+  "version": "0.0.1",
+  "description": "Read sitemap and ping its URLs",
+  "main": "run.js",
+  "scripts": {
+    "ping": "node run.js"
+  },
+  "keywords": [
+    "sitemap",
+    "ping"
+  ],
+  "author": "lcoq <https://github.com/lcoq>",
+  "license": "ISC"
+}
