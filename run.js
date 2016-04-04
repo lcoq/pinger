@@ -122,21 +122,21 @@ function pingUrlsAndRepeat (urls) {
   var promiseChain = Promise.resolve();
   _times(configuration.repeat, function (index) {
     var remainingRepeat = configuration.repeat - index - 1;
-    var pingUrls = function () { return pings(urls, remainingRepeat) };
+    var pingUrls = function () { return _pings(urls, remainingRepeat) };
     promiseChain = promiseChain.then(pingUrls, pingUrls);
   });
   return promiseChain;
 }
 
-function pings (urls, remaining) {
+function _pings (urls, remaining) {
   console.log("Pinging urls, %d iteration(s) remaining after this one...", remaining);
   return urls.slice().reduce(function (promiseChain, url) {
-    var pingUrl = function () { return ping(url); };
+    var pingUrl = function () { return _ping(url); };
     return promiseChain.then(pingUrl, pingUrl);
   }, Promise.resolve());
 }
 
-function ping (url) {
+function _ping (url) {
   return new Promise(function (resolve, reject) {
     request({ url: url, timeout: configuration.timeout * 1000, time: true }, function (error, response, body) {
       if (error && error.code === 'ETIMEDOUT') {
