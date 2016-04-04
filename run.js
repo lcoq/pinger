@@ -12,6 +12,12 @@ var configuration = {
   compressed: false
 };
 
+var report = {
+  timeout: 0,
+  success: 0,
+  error: 0
+}
+
 run();
 
 function run () {
@@ -24,6 +30,7 @@ function run () {
     .then(parseXml)
     .then(getUrlsFromXml)
     .then(pingUrlsAndRepeat)
+    .then(logReport)
     .then(null, logAndThrowError);
 }
 
@@ -128,12 +135,24 @@ function pingUrlsAndRepeat (urls) {
   return promiseChain;
 }
 
+function logReport () {
+  const log = console.log;
+  log("\n--- Report ---");
+  log("Success: %d", report.success);
+  log("Timeout: %d", report.timeout);
+  log("Error: %d", report.error);
+  log("---\n");
+  return Promise.resolve();
+}
+
 function _pings (urls, remaining) {
   console.log("Pinging urls, %d iteration(s) remaining after this one...", remaining);
-  return urls.slice().reduce(function (promiseChain, url) {
+  const allPingsChain = urls.slice().reduce(function (promiseChain, url) {
     var pingUrl = function () { return _ping(url); };
     return promiseChain.then(pingUrl, pingUrl);
   }, Promise.resolve());
+  // ensure nexts #then does not fail when every ping has failed
+  return allPingsChain.then(Promise.resolve, Promise.resolve);
 }
 
 function _ping (url) {
@@ -141,12 +160,15 @@ function _ping (url) {
     request({ url: url, timeout: configuration.timeout * 1000, time: true }, function (error, response, body) {
       if (error && error.code === 'ETIMEDOUT') {
         console.log("  %s TIMEOUT", url);
+        report.timeout++;
         resolve(response);
       } else if (!error) {
         console.log("  %s %d (%ds)", url, response.statusCode, (response.elapsedTime / 1000).toFixed(2));
+        report.success++;
         resolve(response);
       } else {
         console.log("  %s %s", url, error);
+        report.error++;
         reject(error);
       }
     });
