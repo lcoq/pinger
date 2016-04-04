@@ -1,18 +1,22 @@
 var sitemapPath;
 var timeoutSeconds = 5;
 var repeat = 1;
+var isCompressed = false;
 
 const program = require('commander');
 const fs = require('fs');
 const parseXml = require('xml2js').parseString;
 const request = require('request');
+const zlib = require('zlib');
 
 run();
 
 function run () {
   defineProgramAndParseArgs();
-  read(sitemapPath, function(content) {
-    parseUrls(content, pingUrls);
+  read(sitemapPath, function (buffer) {
+    unzip(buffer, function (string) {
+      parseUrls(string, pingUrls);
+    });
   });
 }
 
@@ -22,6 +26,7 @@ function defineProgramAndParseArgs () {
   program.action(function (sitemapPathArg) { sitemapPath = sitemapPathArg; });
   program.option('-r, --repeat <count>', "Number of times URLs are pinged");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout");
+  program.option('-g, --gzip', "Decompress file with gzip");
   program.parse(process.argv);
 
   if (typeof sitemapPath === 'undefined') {
@@ -36,22 +41,40 @@ function defineProgramAndParseArgs () {
     timeoutSeconds = parseFloat(program.timeout);
   }
 
+  if (program.gzip) {
+    isCompressed = true;
+  }
+
   console.log("--- Configuration ---");
   console.log("Sitemap path: %s", sitemapPath);
   console.log("Repeat: %d time(s)", repeat);
   console.log("Timeout: %ds", timeoutSeconds);
+  console.log("Compressed: %s", isCompressed);
   console.log("---\n");
 }
 
 
 function read (filePath, callback) {
   console.log("Reading sitemap...");
-  fs.readFile(sitemapPath, 'utf8', function (error, content) {
+  fs.readFile(sitemapPath, function (error, buffer) {
     if (error) {
       throw new Error("Cannot read sitemap file: " + error.toString());
     }
-    callback(content);
+    callback(buffer);
   });
+}
+
+function unzip (buffer, callback) {
+  if (!isCompressed) {
+    callback(buffer);
+  } else {
+    zlib.unzip(buffer, function (error, unzippedBuffer) {
+      if (error) {
+        throw new Error("Cannot unzip sitemap file:" + error.toString());
+      }
+      callback(unzippedBuffer.toString());
+    });
+  }
 }
 
 function parseUrls (string, callback) {
