@@ -6,14 +6,17 @@ const unzipBuffer = Promise.denodeify(require('zlib').unzip);
 const parseXmlString = Promise.denodeify(require('xml2js').parseString);
 const request = require('request');
 
-var configuration = {
+const log = console.log;
+const log_error = console.error;
+
+const configuration = {
   timeout: 5,
   repeat: 1,
   compressed: false,
   sitemap: false
 };
 
-var report = {
+const report = {
   timeout: 0,
   success: 0,
   error: 0
@@ -35,7 +38,7 @@ function run () {
 }
 
 function logAndThrowError (error) {
-  console.error(error.stack);
+  log_error(error.stack);
   throw error;
 }
 
@@ -81,7 +84,6 @@ function ensurePathOrUrlIsSet () {
 }
 
 function logConfiguration () {
-  const log = console.log;
   log("--- Configuration ---");
   log("File path: %s", configuration.pathOrUrl);
   log("Repeat: %d time(s)", configuration.repeat);
@@ -92,7 +94,7 @@ function logConfiguration () {
 }
 
 function readStream () {
-  console.log("Reading file...");
+  log("Reading file...");
   const pathOrUrl = configuration.pathOrUrl;
   const result = pathOrUrl.match(/^http/) ? _readUrl(pathOrUrl) : readFile(pathOrUrl);
   return result.then(null, function (error) {
@@ -101,7 +103,7 @@ function readStream () {
 }
 
 function unzipStream (stream) {
-  console.log("Unzipping file...");
+  log("Unzipping file...");
   if (!configuration.compressed) {
     return Promise.resolve(stream.toString());
   }
@@ -115,7 +117,7 @@ function unzipStream (stream) {
 }
 
 function parseFileAndGetUrls (string) {
-  console.log("Parsing file and get URLs...");
+  log("Parsing file and get URLs...");
   if (configuration.sitemap) {
     return parseXmlString(string)
       .then(_getUrlsFromXml)
@@ -130,15 +132,14 @@ function parseFileAndGetUrls (string) {
 function pingUrlsAndRepeat (urls) {
   var promiseChain = Promise.resolve();
   _times(configuration.repeat, function (index) {
-    var remainingRepeat = configuration.repeat - index - 1;
-    var pingUrls = function () { return _pings(urls, remainingRepeat) };
+    const remainingRepeat = configuration.repeat - index - 1;
+    const pingUrls = function () { return _pings(urls, remainingRepeat) };
     promiseChain = promiseChain.then(pingUrls, pingUrls);
   });
   return promiseChain;
 }
 
 function logReport () {
-  const log = console.log;
   log("\n--- Report ---");
   log("Success: %d", report.success);
   log("Timeout: %d", report.timeout);
@@ -148,9 +149,9 @@ function logReport () {
 }
 
 function _pings (urls, remaining) {
-  console.log("Pinging urls, %d iteration(s) remaining after this one...", remaining);
-  const allPingsChain = urls.slice().reduce(function (promiseChain, url) {
-    var pingUrl = function () { return _ping(url); };
+  log("Pinging urls, %d iteration(s) remaining after this one...", remaining);
+  const allPingsChain = urls.reduce(function (promiseChain, url) {
+    const pingUrl = function () { return _ping(url); };
     return promiseChain.then(pingUrl, pingUrl);
   }, Promise.resolve());
   // ensure nexts #then does not fail when every ping has failed
@@ -161,15 +162,15 @@ function _ping (url) {
   return new Promise(function (resolve, reject) {
     request({ url: url, timeout: configuration.timeout * 1000, time: true }, function (error, response, body) {
       if (error && error.code === 'ETIMEDOUT') {
-        console.log("  %s TIMEOUT", url);
+        log("  %s TIMEOUT", url);
         report.timeout++;
         resolve(response);
       } else if (!error) {
-        console.log("  %s %d (%ds)", url, response.statusCode, (response.elapsedTime / 1000).toFixed(2));
+        log("  %s %d (%ds)", url, response.statusCode, (response.elapsedTime / 1000).toFixed(2));
         report.success++;
         resolve(response);
       } else {
-        console.log("  %s %s", url, error);
+        log("  %s %s", url, error);
         report.error++;
         reject(error);
       }
@@ -190,9 +191,8 @@ function _readUrl (url) {
 }
 
 function _getUrlsFromXml (xml) {
-  console.log("Getting urls from XML...");
-  const urlElements = xml.urlset.url;
-  const urls = urlElements.map(function (urlElement) {
+  log("Getting urls from XML...");
+  const urls = xml.urlset.url.map(function (urlElement) {
     return urlElement.loc[0];
   });
   return Promise.resolve(urls);
