@@ -17,7 +17,7 @@ run();
 function run () {
   defineProgram()
     .then(readConfiguration)
-    .then(ensureSitemapPathIsSet)
+    .then(ensureSitemapPathOrUrlIsSet)
     .then(logConfiguration)
     .then(readStream)
     .then(unzipStream)
@@ -34,7 +34,7 @@ function logAndThrowError (error) {
 
 function defineProgram () {
   program.version(process.env.npm_package_version);
-  program.arguments('<sitemap-path>');
+  program.arguments('<sitemap-file-path-or-url>');
   program.option('-r, --repeat <count>', "Number of times URLs are pinged");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout");
   program.option('-g, --gzip', "Decompress file with gzip");
@@ -42,8 +42,8 @@ function defineProgram () {
 }
 
 function readConfiguration () {
-  program.action(function (pathArgument) {
-    configuration.sitemapPath = pathArgument;
+  program.action(function (pathOrUrl) {
+    configuration.sitemapPathOrUrl = pathOrUrl;
   });
   program.parse(process.argv);
 
@@ -59,10 +59,10 @@ function readConfiguration () {
   return Promise.resolve();
 }
 
-function ensureSitemapPathIsSet () {
+function ensureSitemapPathOrUrlIsSet () {
   return new Promise(function (resolve, reject) {
-    if (typeof configuration.sitemapPath === 'undefined') {
-      reject(new Error("Cannot ping sitemap: no path given."));
+    if (typeof configuration.sitemapPathOrUrl === 'undefined') {
+      reject(new Error("Cannot ping sitemap: no path or url given."));
     } else {
       resolve();
     }
@@ -72,7 +72,7 @@ function ensureSitemapPathIsSet () {
 function logConfiguration () {
   const log = console.log;
   log("--- Configuration ---");
-  log("Sitemap path: %s", configuration.sitemapPath);
+  log("Sitemap path: %s", configuration.sitemapPathOrUrl);
   log("Repeat: %d time(s)", configuration.repeat);
   log("Timeout: %d second(s)", configuration.timeout);
   log("Compressed: %s", configuration.compressed);
@@ -82,7 +82,9 @@ function logConfiguration () {
 
 function readStream () {
   console.log("Reading sitemap...");
-  return readFile(configuration.sitemapPath).then(null, function (error) {
+  const sitemapPathOrUrl = configuration.sitemapPathOrUrl;
+  const result = sitemapPathOrUrl.match(/^http/) ? _readUrl(sitemapPathOrUrl) : readFile(sitemapPathOrUrl);
+  return result.then(null, function (error) {
     throw new Error("Cannot read sitemap file:\n  " + error.message);
   });
 }
@@ -118,7 +120,7 @@ function getUrlsFromXml (xml) {
 
 function pingUrlsAndRepeat (urls) {
   var promiseChain = Promise.resolve();
-  _times(configuration.repeat, function(index) {
+  _times(configuration.repeat, function (index) {
     var remainingRepeat = configuration.repeat - index - 1;
     var pingUrls = function () { return pings(urls, remainingRepeat) };
     promiseChain = promiseChain.then(pingUrls, pingUrls);
@@ -145,6 +147,18 @@ function ping (url) {
         resolve(response);
       } else {
         console.log("  %s %s", url, error);
+        reject(error);
+      }
+    });
+  });
+}
+
+function _readUrl (url) {
+  return new Promise(function (resolve, reject) {
+    request({ url: url, encoding: null }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        resolve(body);
+      } else {
         reject(error);
       }
     });
