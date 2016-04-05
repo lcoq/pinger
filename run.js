@@ -87,6 +87,7 @@ function logConfiguration () {
   log("--- Configuration ---");
   log("File path: %s", configuration.pathOrUrl);
   log("Repeat: %d time(s)", configuration.repeat);
+  log("Sitemap: %s", configuration.sitemap);
   log("Timeout: %d second(s)", configuration.timeout);
   log("Compressed: %s", configuration.compressed);
   log("---\n");
