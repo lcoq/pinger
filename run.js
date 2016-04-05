@@ -61,10 +61,10 @@ function readConfiguration () {
   program.parse(process.argv);
 
   if (program.bunch && program.bunch.match(/^\d+$/)) {
-    configuration.bunch = parseInt(program.bunch);
+    configuration.bunch = parseInt(program.bunch, 10);
   }
   if (program.repeat && program.repeat.match(/^\d+$/)) {
-    configuration.repeat = parseInt(program.repeat);
+    configuration.repeat = parseInt(program.repeat, 10);
   }
   if (program.sitemap) {
     configuration.sitemap = true;
