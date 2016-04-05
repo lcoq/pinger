@@ -37,12 +37,13 @@ $ npm run ping -- http://domain.com/path/to/zipped/sitemap.xml -sg
 ### Options
 
 ```
--r, --repeat <count>     Number of times URLs are pinged (default to 1)
--s, --sitemap            Parse file as a xml sitemap
--t, --timeout <seconds>  Seconds before request timeout (default to 5)
--g, --gzip               Decompress file with gzip
--h, --help               output usage information
--V, --version            output the version number
+-b, --bunch <count>       Group requests by bunch of <count> requests and execute them simultaneously (default to 1)
+-r, --repeat <count>      Number of times URLs are pinged (default to 1)
+-s, --sitemap             Parse file as a xml sitemap
+-t, --timeout <seconds>   Seconds before request timeout (default to 5)
+-g, --gzip                Decompress file with gzip
+-h, --help                output usage information
+-V, --version             output the version number
 ```
 
 ### Report

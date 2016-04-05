@@ -13,7 +13,8 @@ const configuration = {
   timeout: 5,
   repeat: 1,
   compressed: false,
-  sitemap: false
+  sitemap: false,
+  bunch: 1
 };
 
 const report = {
@@ -27,7 +28,7 @@ run();
 function run () {
   defineProgram()
     .then(readConfiguration)
-    .then(ensurePathOrUrlIsSet)
+    .then(ensureConfigurationIsValid)
     .then(logConfiguration)
     .then(readStream)
     .then(unzipStream)
@@ -45,6 +46,7 @@ function logAndThrowError (error) {
 function defineProgram () {
   program.version(process.env.npm_package_version);
   program.arguments('<file-path-or-url>');
+  program.option('-b, --bunch <count>', "Group requests by bunch of <count> requests and execute them simultaneously (default to " + configuration.bunch + ")");
   program.option('-r, --repeat <count>', "Number of times URLs are pinged (default to " + configuration.repeat + ")");
   program.option('-s, --sitemap', "Parse file as a xml sitemap");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout (default to " + configuration.timeout + ")");
@@ -58,6 +60,9 @@ function readConfiguration () {
   });
   program.parse(process.argv);
 
+  if (program.bunch && program.bunch.match(/^\d+$/)) {
+    configuration.bunch = parseInt(program.bunch);
+  }
   if (program.repeat && program.repeat.match(/^\d+$/)) {
     configuration.repeat = parseInt(program.repeat);
   }
@@ -73,10 +78,12 @@ function readConfiguration () {
   return Promise.resolve();
 }
 
-function ensurePathOrUrlIsSet () {
+function ensureConfigurationIsValid () {
   return new Promise(function (resolve, reject) {
     if (typeof configuration.pathOrUrl === 'undefined') {
-      reject(new Error("Cannot ping file: no path or url given."));
+      reject(new Error("Invalid configuration: no path or url given."));
+    } else if (configuration.bunch <= 0) {
+      reject(new Error("Invalid configuration: bunchs must contain at least 1 request."));
     } else {
       resolve();
     }
@@ -90,6 +97,7 @@ function logConfiguration () {
   log("Sitemap: %s", configuration.sitemap);
   log("Timeout: %d second(s)", configuration.timeout);
   log("Compressed: %s", configuration.compressed);
+  log("Bunch: %d", configuration.bunch);
   log("---\n");
   return Promise.resolve();
 }
@@ -151,12 +159,21 @@ function logReport () {
 
 function _pings (urls, remaining) {
   log("Pinging urls, %d iteration(s) remaining after this one...", remaining);
-  const allPingsChain = urls.reduce(function (promiseChain, url) {
-    const pingUrl = function () { return _ping(url); };
-    return promiseChain.then(pingUrl, pingUrl);
-  }, Promise.resolve());
-  // ensure nexts #then does not fail when every ping has failed
-  return allPingsChain.then(Promise.resolve, Promise.resolve);
+  return _bunchsPings(urls.slice());
+}
+
+function _bunchsPings (urls) {
+  const bunchUrls = urls.splice(0, configuration.bunch);
+  if (configuration.bunch !== 1) {
+    log("Running %d concurrent pings (%d URLs remaining)...", bunchUrls.length, urls.length);
+  }
+  const bunchPingsPromise = Promise.all(bunchUrls.map(_ping));
+  var allBunchsPingsPromise = bunchPingsPromise;
+  if (urls.length > 0) {
+    var performNextBunchsPings = function () { return _bunchsPings(urls); };
+    allBunchsPingsPromise = allBunchsPingsPromise.then(performNextBunchsPings, performNextBunchsPings);
+  }
+  return allBunchsPingsPromise;
 }
 
 function _ping (url) {
@@ -165,15 +182,15 @@ function _ping (url) {
       if (error && error.code === 'ETIMEDOUT') {
         log("  %s TIMEOUT", url);
         report.timeout++;
-        resolve(response);
+        resolve();
       } else if (!error) {
         log("  %s %d (%ds)", url, response.statusCode, (response.elapsedTime / 1000).toFixed(2));
         report.success++;
-        resolve(response);
+        resolve();
       } else {
         log("  %s %s", url, error);
         report.error++;
-        reject(error);
+        resolve();
       }
     });
   });
