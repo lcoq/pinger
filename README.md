@@ -9,8 +9,8 @@ This script provides an easy way to ping some URLS from a raw or sitemap file.
 ## Setup
 
 ```
-$ git clone git@github.com:lcoq/sitemap-ping.git
-$ cd sitemap-ping
+$ git clone git@github.com:lcoq/pinger.git
+$ cd pinger
 $ npm install
 ```
 
