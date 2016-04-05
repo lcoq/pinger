@@ -1,61 +1,81 @@
-## Why ?
+pinger
+======
 
-This script provides an easy way to ping some URLS from a raw or sitemap file.
+A small script for pinging URLs from a sitemap or one-url-by-line file.
 
-## Prerequisites
-
-* [`nodejs`](https://nodejs.org/en/)
-
-## Setup
-
+```sh
+$ npm run ping -- /path/to/file
+$ npm run ping -- http://domain.com/path/to/file
+$ npm run ping -- /path/to/unzipped/sitemap.xml -s
+$ npm run ping -- http://domain.com/sitemap.xml.gz -sg
 ```
+
+Table of Contents
+-----------------
+
+  * [Requirements](#requirements)
+  * [Usage](#usage)
+  * [Report](#report)
+  * [Contributing](#contributing)
+  * [License](#license)
+
+Requirements
+------------
+
+pinger requires the following to run:
+
+  * [Node.js][node]
+  * [npm][npm] (normally comes with Node.js)
+
+Usage
+-----
+
+pinger can be installed by cloning the [git][git] repository and install its dependencies through [npm][npm]:
+
+```sh
 $ git clone git@github.com:lcoq/pinger.git
 $ cd pinger
 $ npm install
 ```
 
-## Usage
+Then you can run pinger with the following command:
 
-### Basic usage
+### `npm run ping -- <file-path-or-url>`
 
-```
-$ npm run ping -- /path/to/file
-$ npm run ping -- http://domain.com/path/to/file
-```
+pinger pings once each URLs in a file separated by a newline.
 
-```
-$ npm run ping -- /path/to/sitemap.xml -s
-$ npm run ping -- http://domain.com/path/to/sitemap.xml -s
-```
+### `npm run ping -- <sitemap.xml.gz-path-or-url> -gs`
 
-```
-$ npm run ping -- /path/to/zipped/sitemap.xml.gz -sg
-$ npm run ping -- http://domain.com/path/to/zipped/sitemap.xml -sg
-```
-
+pinger pings once each URLs in the given `.xml.gz` sitemap file.
 
 ### Options
 
+pinger supports the following options:
+
 ```
--b, --bunch <count>       Group requests by bunch of <count> requests and execute them simultaneously (default to 1)
--r, --repeat <count>      Number of times URLs are pinged (default to 1)
--s, --sitemap             Parse file as a xml sitemap
+-s, --sitemap             Parse file as a .xml sitemap
+-g, --gzip                Unzip .gz file
 -t, --timeout <seconds>   Seconds before request timeout (default to 5)
--g, --gzip                Decompress file with gzip
+-r, --repeat <count>      Number of times URLs are pinged (default to 1)
+-b, --bunch <count>       Group requests by bunch of <count> requests and execute them simultaneously (default to 1)
 -h, --help                output usage information
 -V, --version             output the version number
 ```
 
-### Report
+Report
+------
 
-This script provides a report for each URL pinged:
+pinger reports for each URL pinged the status code of the response and the time elapsed during the request-response cycle (including redirects).
+
+When pinger is used with the `--timeout` option, each URL that ended in a request timeout is also reported:
 
 ```
 http://www.google.com 200 (0.36s)
+http://www.google.fr 200 (0.38s)
 http://www.bing.com TIMEOUT
 ```
 
-And a report once all URLs have been pinged:
+pinger also provides a report once all URLs are pinged:
 
 ```
 --- Report ---
@@ -64,3 +84,21 @@ Timeout: 4
 Error: 0
 ---
 ```
+
+Contributing
+------------
+
+To contribute to pinger, please clone this repository locally, commit your code in a separate branch and open a pull-request.
+
+License
+-------
+
+pinger is licensed under the [MIT][mit] license.
+
+Copyright &copy; 2016, Louis Coquio
+
+
+[node]: https://nodejs.org/
+[npm]: https://www.npmjs.com/
+[git]: https://git-scm.com/
+[mit]: https://opensource.org/licenses/MIT

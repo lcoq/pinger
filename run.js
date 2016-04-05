@@ -48,9 +48,9 @@ function defineProgram () {
   program.arguments('<file-path-or-url>');
   program.option('-b, --bunch <count>', "Group requests by bunch of <count> requests and execute them simultaneously (default to " + configuration.bunch + ")");
   program.option('-r, --repeat <count>', "Number of times URLs are pinged (default to " + configuration.repeat + ")");
-  program.option('-s, --sitemap', "Parse file as a xml sitemap");
+  program.option('-s, --sitemap', "Parse file as a .xml sitemap");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout (default to " + configuration.timeout + ")");
-  program.option('-g, --gzip', "Decompress file with gzip");
+  program.option('-g, --gzip', "Unzip .gz file");
   return Promise.resolve();
 }
 
