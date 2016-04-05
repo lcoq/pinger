@@ -182,16 +182,14 @@ function _ping (url) {
       if (error && error.code === 'ETIMEDOUT') {
         log("  %s TIMEOUT", url);
         report.timeout++;
-        resolve();
       } else if (!error) {
         log("  %s %d (%ds)", url, response.statusCode, (response.elapsedTime / 1000).toFixed(2));
         report.success++;
-        resolve();
       } else {
         log("  %s %s", url, error);
         report.error++;
-        resolve();
       }
+      resolve();
     });
   });
 }
