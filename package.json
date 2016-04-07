@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "Read sitemap or file containing one URL per line, and ping its URLs",
   "main": "run.js",
-  "scripts": {
-    "ping": "node run.js"
+  "bin": {
+    "pinger": "bin/pinger.js"
   },
   "keywords": [
     "ping",
