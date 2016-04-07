@@ -2,7 +2,7 @@
   "name": "@lcoq/pinger",
   "version": "0.0.1",
   "author": "Louis Coquio <https://github.com/lcoq>",
-  "license": "ISC",
+  "license": "MIT",
   "description": "Read sitemap or file containing one URL per line, and ping its URLs",
   "keywords": [ "pinger", "ping", "url", "sitemap" ],
   "bugs": { "url": "https://github.com/lcoq/pinger/issues" },
