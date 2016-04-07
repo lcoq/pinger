@@ -1,13 +1,13 @@
-pinger
+@lcoq/pinger
 ======
 
 A small script for pinging URLs from a sitemap or one-url-by-line file.
 
 ```sh
-$ npm run ping -- /path/to/file
-$ npm run ping -- http://domain.com/path/to/file
-$ npm run ping -- /path/to/unzipped/sitemap.xml -s
-$ npm run ping -- http://domain.com/sitemap.xml.gz -sg
+$ pinger /path/to/file
+$ pinger http://domain.com/path/to/file
+$ pinger /path/to/unzipped/sitemap.xml -s
+$ pinger http://domain.com/sitemap.xml.gz -sg
 ```
 
 Table of Contents
@@ -30,21 +30,21 @@ pinger requires the following to run:
 Usage
 -----
 
-pinger can be installed by cloning the [git][git] repository and install its dependencies through [npm][npm]:
+pinger is easiest to use when installed with [npm][npm].
+
+Install it globally so you'll have access to the `pinger` command anywhere on your system.
 
 ```sh
-$ git clone git@github.com:lcoq/pinger.git
-$ cd pinger
-$ npm install
+$ npm install -g @lcoq/pinger
 ```
 
 Then you can run pinger with the following command:
 
-### `npm run ping -- <file-path-or-url>`
+### `pinger <file-path-or-url>`
 
 pinger pings once each URLs in a file separated by a newline.
 
-### `npm run ping -- <sitemap.xml.gz-path-or-url> -gs`
+### `pinger <sitemap.xml.gz-path-or-url> -sg`
 
 pinger pings once each URLs in the given `.xml.gz` sitemap file.
 
@@ -100,5 +100,4 @@ Copyright &copy; 2016, Louis Coquio
 
 [node]: https://nodejs.org/
 [npm]: https://www.npmjs.com/
-[git]: https://git-scm.com/
 [mit]: https://opensource.org/licenses/MIT
