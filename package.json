@@ -1,18 +1,13 @@
 {
-  "name": "pinger",
+  "name": "@lcoq/pinger",
   "version": "0.0.1",
+  "author": "Louis Coquio <https://github.com/lcoq>",
+  "license": "MIT",
   "description": "Read sitemap or file containing one URL per line, and ping its URLs",
-  "main": "run.js",
-  "scripts": {
-    "ping": "node run.js"
-  },
-  "keywords": [
-    "ping",
-    "url",
-    "sitemap"
-  ],
-  "author": "lcoq <https://github.com/lcoq>",
-  "license": "ISC",
+  "keywords": [ "pinger", "ping", "url", "sitemap" ],
+  "bugs": { "url": "https://github.com/lcoq/pinger/issues" },
+  "repository": { "type": "git", "url": "https://github.com/lcoq/pinger" },
+  "bin": { "pinger": "bin/pinger.js" },
   "dependencies": {
     "commander": "^2.9.0",
     "fs": "0.0.2",

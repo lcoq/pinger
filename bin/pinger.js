@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const Promise = require('promise');
 const program = require('commander');
 
