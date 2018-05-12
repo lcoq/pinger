@@ -16,7 +16,8 @@ const configuration = {
   repeat: 1,
   compressed: false,
   sitemap: false,
-  bunch: 1
+  bunch: 1,
+  agent: 'Mozilla/2.0 (compatible; lcoq-pinger crawler/bot (https://github.com/lcoq/pinger)'
 };
 
 const report = {
@@ -53,6 +54,7 @@ function defineProgram () {
   program.option('-s, --sitemap', "Parse file as a .xml sitemap");
   program.option('-t, --timeout <seconds>', "Seconds before request timeout (default to " + configuration.timeout + ")");
   program.option('-g, --gzip', "Unzip .gz file");
+  program.option('-A, --agent <agent>', "Specify the User-Agent string to send to the HTTP server (default to '" + configuration.agent + "')");
   return Promise.resolve();
 }
 
@@ -77,6 +79,9 @@ function readConfiguration () {
   if (program.gzip) {
     configuration.compressed = true;
   }
+  if (program.agent) {
+    configuration.agent = program.agent;
+  }
   return Promise.resolve();
 }
 
@@ -100,6 +105,7 @@ function logConfiguration () {
   log("Timeout: %d second(s)", configuration.timeout);
   log("Compressed: %s", configuration.compressed);
   log("Bunch: %d", configuration.bunch);
+  log("User-Agent: %s", configuration.agent);
   log("---\n");
   return Promise.resolve();
 }
@@ -180,7 +186,12 @@ function _bunchsPings (urls) {
 
 function _ping (url) {
   return new Promise(function (resolve, reject) {
-    request({ url: url, timeout: configuration.timeout * 1000, time: true }, function (error, response, body) {
+    request({
+      url: url,
+      timeout: configuration.timeout * 1000,
+      time: true,
+      headers: { 'User-Agent': configuration.agent }
+    }, function (error, response, body) {
       if (error && error.code === 'ETIMEDOUT') {
         log("  %s TIMEOUT", url);
         report.timeout++;
