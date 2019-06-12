@@ -58,6 +58,7 @@ pinger supports the following options:
 -t, --timeout <seconds>   Seconds before request timeout (default to 5)
 -r, --repeat <count>      Number of times URLs are pinged (default to 1)
 -b, --bunch <count>       Group requests by bunch of <count> requests and execute them simultaneously (default to 1)
+-A, --agent               Specify the User-Agent string to send to the HTTP server
 -h, --help                output usage information
 -V, --version             output the version number
 ```
